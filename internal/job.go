@@ -19,7 +19,7 @@ type templateNodes struct {
 	Name        string  `db:"name"`
 	TemplateID  int64   `db:"template_id"`
 	Type        string  `db:"type"`
-	ApplyTo     string  `db:"apply_to"`
+	ApplyTo     *string `db:"apply_to"`
 	Composition *string `db:"composition"`
 	G1          *int64  `db:"g1"`
 	G2          *int64  `db:"g2"`
@@ -27,8 +27,9 @@ type templateNodes struct {
 }
 
 type newTask struct {
-	TypeID int64  `db:"type_id"`
-	Status string `db:"status"`
+	TypeID    int64  `db:"type_id"`
+	Status    string `db:"status"`
+	ServiceID *int64 `db:"service_id"`
 }
 
 type JobService struct {
@@ -39,7 +40,7 @@ func NewJobService(db *sqlx.DB) *JobService {
 	return &JobService{db: db}
 }
 
-func (s *JobService) SubmitJob(ctx context.Context, jobTemplateName string, services ...string) error {
+func (s *JobService) SubmitJob(ctx context.Context, jobTemplateName string, servicesIds ...int64) error {
 	// на основании шаблона и сервисов генерируются таски
 	rr, err := s.db.QueryxContext(ctx, selectJobTemplate, jobTemplateName)
 	defer rr.Close()
@@ -69,20 +70,36 @@ func (s *JobService) SubmitJob(ctx context.Context, jobTemplateName string, serv
 	}
 
 	for _, node := range nodes {
-		query, params, err := s.db.BindNamed(
-			insertTask,
-			newTask{TypeID: *node.TaskTypeID, Status: "new"},
-		)
-		if err != nil {
-			return err
-		}
+		if *node.ApplyTo == "every_service" {
+			for _, ID := range servicesIds {
+				query, params, err := s.db.BindNamed(
+					insertTask,
+					newTask{TypeID: *node.TaskTypeID, Status: "new", ServiceID: &ID},
+				)
 
-		_, err = s.db.QueryContext(ctx, query, params...)
-		if err != nil {
-			return err
-		}
+				if err != nil {
+					return err
+				}
 
-		//println(node)
+				_, err = s.db.QueryContext(ctx, query, params...)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			query, params, err := s.db.BindNamed(
+				insertTask,
+				newTask{TypeID: *node.TaskTypeID, Status: "new"},
+			)
+			if err != nil {
+				return err
+			}
+
+			_, err = s.db.QueryContext(ctx, query, params...)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

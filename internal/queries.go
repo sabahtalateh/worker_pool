@@ -21,6 +21,4 @@ const selectJobTemplateNodes = `select id,
 from job_template_nodes
 where type = 'task' and template_id = $1`
 
-const insertTask = `
-insert into tasks (type_id, status)
-values (:type_id, :status)`
+const insertTask = `insert into tasks (type_id, status, service_id) values (:type_id, :status, :service_id)`

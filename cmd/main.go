@@ -21,12 +21,7 @@ func main() {
 	db, _ := sqlx.Connect("postgres", "host=127.0.0.1 user=postgres password=postgres dbname=worker_pool port=23345 sslmode=disable binary_parameters=yes")
 
 	js := internal.NewJobService(db)
-	_ = js.SubmitJob(
-		ctx,
-		"standard deployment",
-		"table-booking",
-		"vendor-onboarding",
-	)
+	_ = js.SubmitJob(ctx, "standard deployment", 1, 3)
 
 	pool, _ := internal.NewPool(2, 5*time.Second, db)
 	go func() {

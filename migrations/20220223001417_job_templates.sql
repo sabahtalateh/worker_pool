@@ -9,7 +9,7 @@ create table job_templates
 
 create type job_template_node_type as enum ('group', 'task');
 create type job_template_node_composition as enum ('parallel', 'consequence');
-create type job_template_target as enum ('single_service', 'all_services');
+create type job_template_target as enum ('every_service', 'entire_pipeline');
 
 create table job_template_nodes
 (
@@ -18,7 +18,7 @@ create table job_template_nodes
     name         varchar unique         not null,
     template_id  int                    not null,
     type         job_template_node_type not null,
-    apply_to     job_template_target    not null default 'single_service',
+    apply_to     job_template_target,
     composition  job_template_node_composition, -- in case of type == group
     g1           int,                           -- in case of type == group
     g2           int,                           -- in case of type == group
@@ -33,17 +33,17 @@ create table job_template_nodes
 insert into job_templates (name)
 values ('standard deployment');
 
-insert into job_template_nodes (template_id, name, type, composition, g1, g2, task_type_id)
+insert into job_template_nodes (template_id, name, type, composition, g1, g2, task_type_id, apply_to)
 values ((select id from job_templates where name = 'standard deployment'), 'build', 'task', null, null, null,
-        (select id from task_types where name = 'build'));
+        (select id from task_types where name = 'build'), 'every_service');
 
-insert into job_template_nodes (template_id, name, type, composition, g1, g2, task_type_id)
+insert into job_template_nodes (template_id, name, type, composition, g1, g2, task_type_id, apply_to)
 values ((select id from job_templates where name = 'standard deployment'), 'clone config', 'task', null, null, null,
-        (select id from task_types where name = 'clone_config'));
+        (select id from task_types where name = 'clone_config'), 'every_service');
 
-insert into job_template_nodes (template_id, name, type, composition, g1, g2, task_type_id)
+insert into job_template_nodes (template_id, name, type, composition, g1, g2, task_type_id, apply_to)
 values ((select id from job_templates where name = 'standard deployment'), 'render config', 'task', null, null, null,
-        (select id from task_types where name = 'render_config'));
+        (select id from task_types where name = 'render_config'), 'every_service');
 
 insert into job_template_nodes (template_id, name, type, composition, g1, g2)
 values ((select id from job_templates where name = 'standard deployment'), 'clone & render', 'group', 'consequence',
@@ -56,8 +56,9 @@ values ((select id from job_templates where name = 'standard deployment'), 'buil
         (select id from job_template_nodes where name = 'build'),
         (select id from job_template_nodes where name = 'clone & render'));
 
-insert into job_template_nodes (template_id, name, type, task_type_id)
-values ((select id from job_templates where name = 'standard deployment'), 'deploy', 'task', (select id from task_types where name = 'deploy'));
+insert into job_template_nodes (template_id, name, type, task_type_id, apply_to)
+values ((select id from job_templates where name = 'standard deployment'), 'deploy', 'task',
+        (select id from task_types where name = 'deploy'), 'entire_pipeline');
 
 insert into job_template_nodes (root, template_id, name, type, composition, g1, g2)
 values (true, (select id from job_templates where name = 'standard deployment'), 'full standard deployment', 'group',
