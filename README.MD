@@ -50,4 +50,4 @@ el {
 <img src="./scheme.jpeg"></img>
 
 ## Текущая база
-<img src="./db.jpeg"></img>
+<img src="./db.png"></img>
