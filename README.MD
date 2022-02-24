@@ -48,3 +48,6 @@ el {
 ```
 ## Этот же граф в виде квадратов
 <img src="./scheme.jpeg"></img>
+
+## Текущая база
+<img src="./db.jpeg"></img>
