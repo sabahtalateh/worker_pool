@@ -1,0 +1,12 @@
+version: '2.4'
+
+services:
+  postgres:
+    image: postgres:14.1
+    environment:
+      - POSTGRES_DB=worker_pool
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+    ports:
+      - ${DB_PORT:-5432}:5432
+    command: ["postgres", "-c", "log_statement=all"]
